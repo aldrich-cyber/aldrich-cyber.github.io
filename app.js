@@ -131,10 +131,13 @@ function setupEventListeners() {
     reportForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
+        // Refetch to guarantee we have the latest DOM element and prevent null errors
+        const submitBtnEl = document.getElementById('submitBtn') || document.querySelector('button[type="submit"]');
+
         // Disable button during submit
-        const originalBtnText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loading...';
-        submitBtn.disabled = true;
+        const originalBtnText = submitBtnEl.innerHTML;
+        submitBtnEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loading...';
+        submitBtnEl.disabled = true;
 
         try {
             const type = document.querySelector('input[name="reportType"]:checked').value;
@@ -218,10 +221,10 @@ function setupEventListeners() {
 
         } catch (error) {
             console.error("Error submitting form: ", error);
-            alert("Oops! Entheyilum kuzhappam patti. Please try again.");
+            alert("Oops! Entheyilum kuzhappam patti:\n\n" + error.message + "\n\n(Check your Firebase Storage/Firestore security rules!)");
         } finally {
-            submitBtn.innerHTML = originalBtnText;
-            submitBtn.disabled = false;
+            submitBtnEl.innerHTML = originalBtnText;
+            submitBtnEl.disabled = false;
         }
     });
 }
@@ -370,3 +373,4 @@ function escapeHtml(unsafe) {
 
 // Boot
 document.addEventListener('DOMContentLoaded', init);
+
