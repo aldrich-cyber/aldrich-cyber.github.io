@@ -112,7 +112,9 @@ window.shareToWhatsApp = function (id) {
     message += `*Contact:* ${item.contactInfo || 'No phone number'}\n`;
     if (item.email) message += `*Email:* ${item.email}\n\n`;
     else message += `\n`;
-    message += `_Shared via Vidya Lost & Found App_`;
+    const appLink = window.location.origin + window.location.pathname;
+    message += `_Shared via Vidya Lost & Found App_\n`;
+    message += `🔗 ${appLink}`;
 
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
@@ -491,7 +493,7 @@ function renderItems(items) {
         const safeLoc = escapeHtml(item.location || "Unknown Location");
         const safeCategory = escapeHtml(item.category || "Other");
         const safeContact = escapeHtml(item.contactInfo || "No phone number");
-        const safeEmail = escapeHtml(item.email || "No email provided");
+        const emailHtml = item.email ? `<div style="margin-top: 0.3rem;"><i class="fa-solid fa-envelope"></i> <a href="mailto:${escapeHtml(item.email)}" style="color: inherit; text-decoration: none;">${escapeHtml(item.email)}</a></div>` : '';
 
         // Ownership detection
         const isOwner = getOwnedItemIds().includes(item.id);
@@ -522,7 +524,7 @@ function renderItems(items) {
                 </div>
                 <div class="item-meta" style="margin-top:0.5rem; color:var(--accent-blue)">
                     <div><i class="fa-solid fa-phone"></i> ${safeContact}</div>
-                    <div style="margin-top: 0.3rem;"><i class="fa-solid fa-envelope"></i> <a href="mailto:${safeEmail}" style="color: inherit; text-decoration: none;">${safeEmail}</a></div>
+                    ${emailHtml}
                 </div>
             </div>
         `;
@@ -542,4 +544,3 @@ function escapeHtml(unsafe) {
 
 // Boot
 document.addEventListener('DOMContentLoaded', init);
-
