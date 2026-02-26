@@ -53,10 +53,10 @@
                 </button>
             </div>
             <ul class="mobile-nav-links">
-                <li><a href="#" class="mobile-nav-item nav-item active" data-target="home">Tharavadu (Home)</a></li>
-                <li><a href="#" class="mobile-nav-item nav-item" data-target="browse">Thappi Nokkam (Search)</a></li>
-                <li><a href="#" class="btn btn-primary btn-full nav-item mobile-nav-item" data-target="report">Parathi
-                        Kodukkam <i class="fa-solid fa-bullhorn"></i></a></li>
+                <li><a href="#" class="mobile-nav-item nav-item active" data-target="home">Home</a></li>
+                <li><a href="#" class="mobile-nav-item nav-item" data-target="browse">Browse Items</a></li>
+                <li><a href="#" class="btn btn-primary btn-full nav-item mobile-nav-item" data-target="report">Report
+                        Item <i class="fa-solid fa-bullhorn"></i></a></li>
             </ul>
         </div>
 
@@ -67,21 +67,25 @@
             <section id="home" class="view-section active">
                 <div class="hero-container">
                     <div class="hero-content">
-                        <div class="badge fade-in-up">Vidya Local Setup</div>
+                        <div class="badge fade-in-up">
+                            <span
+                                style="display: inline-block; width: 8px; height: 8px; background-color: #4ade80; border-radius: 50%; margin-right: 6px; box-shadow: 0 0 5px #4ade80; animation: blink 2s infinite;"></span>
+                            Vidya Local Setup
+                        </div>
                         <h1 class="hero-title fade-in-up" style="animation-delay: 0.1s;">
                             Enthelum Poya?<br>
                             <span class="text-gradient">Aarelum Tharum!</span>
                         </h1>
                         <p class="hero-subtitle fade-in-up" style="animation-delay: 0.2s;">
-                            Campusil enthengilum kaananillatha avastha vannitundo? Aaro adichu maatiyennu karuthanda,
-                            ivide vannu nokku bro!
+                            Lost something on campus? Or found someone else's item? Report it here and help our
+                            community reconnect with their things.
                         </p>
                         <div class="hero-actions fade-in-up" style="animation-delay: 0.3s;">
                             <button class="btn btn-primary btn-full action-btn" data-target="report">
-                                <i class="fa-solid fa-bullhorn"></i> Nte Oru Saanam Poyi!
+                                <i class="fa-solid fa-bullhorn"></i> Report Item
                             </button>
                             <button class="btn btn-secondary btn-full action-btn mt-2" data-target="browse">
-                                <i class="fa-solid fa-search"></i> Evideyelum Undo Nokkam
+                                <i class="fa-solid fa-search"></i> Browse Items
                             </button>
                         </div>
                     </div>
@@ -92,13 +96,13 @@
                     <div class="feature-card glass-panel">
                         <div class="feature-icon"><i class="fa-solid fa-laugh-beam"></i></div>
                         <h3>120+</h3>
-                        <p>Kittiya Sadhanangal</p>
+                        <p>Items Recovered</p>
                     </div>
                     <div class="feature-card glass-panel">
                         <div class="feature-icon" style="color: var(--accent-purple)"><i
                                 class="fa-solid fa-handshake-simple"></i></div>
-                        <h3>Polikkum</h3>
-                        <p>Kidilan Return Rate</p>
+                        <h3>Awesome</h3>
+                        <p>Community Success</p>
                     </div>
                 </div>
             </section>
@@ -107,19 +111,20 @@
             <section id="browse" class="view-section hidden pt-80">
                 <div class="section-padding">
                     <div class="section-header align-left">
-                        <h2><span class="text-gradient">Thappi Nokkam</span></h2>
-                        <p>Aardokkeyo enthokkeyo poyitund, aarkokkeyo enthokkeyo kittiyitund.</p>
+                        <h2><span class="text-gradient">Browse Dashboard</span></h2>
+                        <p>See what has been lost or found around the campus.</p>
                     </div>
 
                     <div class="filters">
                         <div class="search-bar">
                             <i class="fa-solid fa-search"></i>
-                            <input type="text" id="searchInput" placeholder="Bottle, ID Card.. Enthuva vende?">
+                            <input type="text" id="searchInput"
+                                placeholder="Bottle, ID Card.. What are you looking for?">
                         </div>
                         <div class="filter-chips">
-                            <button class="filter-chip active" data-filter="all">Muzhuvan</button>
-                            <button class="filter-chip" data-filter="lost">Poyathu</button>
-                            <button class="filter-chip" data-filter="found">Kittiyathu</button>
+                            <button class="filter-chip active" data-filter="all">All</button>
+                            <button class="filter-chip" data-filter="lost">Lost</button>
+                            <button class="filter-chip" data-filter="found">Found</button>
                         </div>
                     </div>
 
@@ -133,79 +138,89 @@
             <section id="report" class="view-section hidden pt-80">
                 <div class="section-padding form-container">
                     <div class="section-header align-left">
-                        <h2>Parathi <span class="text-gradient">Kodukkuka</span></h2>
-                        <p>Ullathu parayalo, nattukare ariyikkuka!</p>
+                        <h2>Report <span class="text-gradient">an Item</span></h2>
+                        <p>Help the community by sharing accurate details.</p>
                     </div>
 
                     <form id="reportForm">
                         <div class="form-group">
-                            <label>Sathyam Parayu, Poyaano kittiyeaano?</label>
+                            <label>Report Type</label>
                             <div class="radio-group">
                                 <label class="radio-card">
                                     <input type="radio" name="reportType" value="lost" checked>
                                     <div class="radio-content">
                                         <i class="fa-solid fa-sad-cry"></i>
-                                        <span>Poyii 😭</span>
+                                        <span>Lost It 😭</span>
                                     </div>
                                 </label>
                                 <label class="radio-card">
                                     <input type="radio" name="reportType" value="found">
                                     <div class="radio-content">
                                         <i class="fa-solid fa-smile-beam"></i>
-                                        <span>Kittii 😎</span>
+                                        <span>Found It 😎</span>
                                     </div>
                                 </label>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label for="itemName">Saadhanathinte Peru</label>
-                            <input type="text" id="itemName" required placeholder="e.g. Nte Blue Bottle">
+                            <label for="itemName">Item Name</label>
+                            <input type="text" id="itemName" required placeholder="e.g. Blue Water Bottle">
                         </div>
 
                         <div class="form-group">
-                            <label for="category">Athethu Vakuppa?</label>
+                            <label for="category">Category</label>
                             <select id="category" required>
                                 <option value="" disabled selected>Select a category</option>
                                 <option value="Electronics">Electronics (Phone/Charger)</option>
                                 <option value="ID/Documents">ID Card/Books</option>
-                                <option value="Accessories">Watch/Mala/Vala</option>
-                                <option value="Other">Vere entho valli</option>
+                                <option value="Accessories">Watch/Jewelry</option>
+                                <option value="Other">Other Category</option>
                             </select>
                         </div>
 
                         <div class="form-group">
-                            <label for="location">Evidunnu Poyi/Kitti?</label>
-                            <input type="text" id="location" required placeholder="e.g. Canteeninte munnil">
+                            <label for="location">Location (Where did you lose/find it?)</label>
+                            <input type="text" id="location" required placeholder="e.g. Near the main canteen">
                         </div>
 
                         <div class="form-group">
-                            <label for="date">Ennanu Sambavam?</label>
+                            <label for="date">Date of Incident</label>
                             <input type="date" id="date" required>
                         </div>
 
                         <div class="form-group">
-                            <label for="description">Cheriya Oru Vivaranam</label>
+                            <label for="description">Short Description</label>
                             <textarea id="description" rows="3" required
-                                placeholder="Aake koodi oru valiya bottle aayirunnu..."></textarea>
+                                placeholder="A 1-litre Milton bottle..."></textarea>
                         </div>
 
                         <div class="form-group">
-                            <label for="itemImage">Oru Photo Koodi Aayaal Polikkum (Optional)</label>
+                            <label for="itemImage">Upload Photo (Highly Recommended!)</label>
                             <input type="file" id="itemImage" accept="image/*" class="file-input">
                         </div>
 
                         <div class="form-group">
-                            <label for="contactInfo">Ninne engane thappi pidikkam? (Phone/Insta)</label>
-                            <input type="text" id="contactInfo" required placeholder="Number or Insta ID tharu">
+                            <label for="contactInfo">Phone Number</label>
+                            <input type="tel" id="contactInfo" required placeholder="10-digit Phone Number"
+                                maxlength="10">
+                            <div id="phoneError"
+                                style="color: #ff4d4d; font-size: 13px; margin-top: 5px; display: none;"><i
+                                    class="fa-solid fa-triangle-exclamation"></i> Only numbers are allowed.</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email Address <span
+                                    style="font-size: 0.8em; color: var(--text-muted);">(Optional)</span></label>
+                            <input type="email" id="email" placeholder="your.email@example.com">
                         </div>
 
                         <button type="submit" class="btn btn-primary btn-full mt-4" id="submitBtn">
-                            <i class="fa-solid fa-paper-plane"></i> Submit Adikko !
+                            <i class="fa-solid fa-paper-plane"></i> Submit Report
                         </button>
 
                         <div id="formSuccess" class="success-message hidden mt-3">
-                            <i class="fa-solid fa-check-double"></i> Set aakki mone!
+                            <i class="fa-solid fa-check-double"></i> Successfully submitted! Set aakki mone!
                         </div>
                     </form>
                 </div>
@@ -214,7 +229,7 @@
 
         <footer>
             <div class="footer-content">
-                <p>Nammude Swantham <br> Vidya College Padupus</p>
+                <p>Vidya College Campus <br> Lost & Found Initiative</p>
                 <div class="app-home-indicator"></div>
             </div>
         </footer>
@@ -224,7 +239,7 @@
     <script type="module">
         // We are using type="module" in our main app.js to import firebase
     </script>
-    <script type="module" src="app.js?v=2"></script>
+    <script type="module" src="app.js?v=6"></script>
 </body>
 
 </html>
