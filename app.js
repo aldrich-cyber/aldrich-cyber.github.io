@@ -279,7 +279,7 @@ function setupEventListeners() {
                 const file = imageInput.files[0];
 
                 // Using a public API key for ImgBB 
-                const imgbbKey = '49419b48c3b06292b1ced57d0f946237';
+                const imgbbKey = 'e08674c1d607d0f902882959bef06795';
 
                 try {
                     // Convert file to pure Base64 (No Data URL Prefix) for ImgBB
@@ -544,3 +544,4 @@ function escapeHtml(unsafe) {
 
 // Boot
 document.addEventListener('DOMContentLoaded', init);
+
