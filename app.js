@@ -1,6 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+import { getFirestore, collection, addDoc, getDocs, onSnapshot, query, orderBy, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // ==========================================================================
 // 🔴 FIREBASE CONFIGURATION - REPLACE WITH YOUR PROJECT DETAILS 🔴
@@ -16,14 +15,13 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app, db, storage;
+let app, db;
 let isFirebaseConfigured = firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY" && firebaseConfig.apiKey.length > 20;
 
 if (isFirebaseConfigured) {
     try {
         app = initializeApp(firebaseConfig);
         db = getFirestore(app);
-        storage = getStorage(app);
         console.log("Firebase initialized successfully");
     } catch (e) {
         console.error("Firebase initialization error:", e);
@@ -61,6 +59,24 @@ const MOCK_ITEMS = [
     }
 ];
 
+// Ownership Tracking (Device Level)
+function getOwnedItemIds() {
+    try {
+        const stored = localStorage.getItem('vidyaOwnedItems');
+        return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function addOwnedItemId(id) {
+    const owned = getOwnedItemIds();
+    if (!owned.includes(id)) {
+        owned.push(id);
+        localStorage.setItem('vidyaOwnedItems', JSON.stringify(owned));
+    }
+}
+
 // App State
 let currentItems = isFirebaseConfigured ? [] : [...MOCK_ITEMS];
 let currentFilter = 'all';
@@ -80,14 +96,79 @@ const closeMenuBtn = document.getElementById('closeMenuBtn');
 const mobileMenu = document.getElementById('mobileMenu');
 const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
 
+// Expose share function to window for the inline onclick handler
+window.shareToWhatsApp = function (id) {
+    const item = currentItems.find(i => i.id === id);
+    if (!item) return;
+
+    const isLost = item.type === 'lost';
+    const alertType = isLost ? '🚨 *LOST ITEM ALERT* 🚨' : '✅ *FOUND ITEM ALERT* ✅';
+
+    let message = `${alertType}\n\n`;
+    message += `*Item:* ${item.name || 'Unknown'}\n`;
+    message += `*Category:* ${item.category || 'Other'}\n`;
+    message += `*${isLost ? 'Lost at' : 'Found at'}:* ${item.location || 'Unknown location'}\n`;
+    if (item.description) message += `*Description:* ${item.description}\n`;
+    message += `*Contact:* ${item.contactInfo || 'No phone number'}\n`;
+    if (item.email) message += `*Email:* ${item.email}\n\n`;
+    else message += `\n`;
+    message += `_Shared via Vidya Lost & Found App_`;
+
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+};
+
+// Expose delete function to window for the inline onclick handler
+window.deleteItem = async function (id) {
+    if (!getOwnedItemIds().includes(id)) {
+        alert("You can only delete items that you have reported!");
+        return;
+    }
+
+    if (confirm("Are you sure you want to delete this item?")) {
+        if (isFirebaseConfigured) {
+            try {
+                // Delete from db (listener will auto-update UI)
+                await deleteDoc(doc(db, "items", id));
+            } catch (error) {
+                console.error("Error deleting item:", error);
+                alert("Failed to delete item. Check your permissions.");
+            }
+        } else {
+            // Mock data deletion
+            const index = MOCK_ITEMS.findIndex(item => item.id === id);
+            if (index > -1) {
+                MOCK_ITEMS.splice(index, 1);
+                currentItems = [...MOCK_ITEMS];
+                applyFilters();
+            }
+        }
+    }
+};
+
 // Initialize App
 function init() {
+    cleanupOldMockItems();
     if (isFirebaseConfigured) {
         listenForItems(); // Real-time listener for Firebase
     } else {
         renderItems(currentItems);
     }
     setupEventListeners();
+}
+
+// Clean up mock items older than 30 days
+function cleanupOldMockItems() {
+    const now = Date.now();
+    for (let i = MOCK_ITEMS.length - 1; i >= 0; i--) {
+        const daysOld = (now - MOCK_ITEMS[i].timestamp) / (1000 * 60 * 60 * 24);
+        if (daysOld > 30) {
+            MOCK_ITEMS.splice(i, 1);
+        }
+    }
+    if (!isFirebaseConfigured) {
+        currentItems = [...MOCK_ITEMS];
+    }
 }
 
 // Setup Event Listeners
@@ -127,6 +208,24 @@ function setupEventListeners() {
         applyFilters();
     });
 
+    // Phone Validation
+    const phoneInput = document.getElementById('contactInfo');
+    const phoneError = document.getElementById('phoneError');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function (e) {
+            const hasLetters = /[^\d]/.test(this.value);
+            if (hasLetters) {
+                if (phoneError) phoneError.style.display = 'block';
+                this.value = this.value.replace(/[^\d]/g, '');
+            } else {
+                if (phoneError) phoneError.style.display = 'none';
+            }
+            if (this.value.length > 10) {
+                this.value = this.value.slice(0, 10);
+            }
+        });
+    }
+
     // Form Submission
     reportForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -147,6 +246,7 @@ function setupEventListeners() {
             const date = document.getElementById('date').value;
             const description = document.getElementById('description').value;
             const contactInfo = document.getElementById('contactInfo').value;
+            const email = document.getElementById('email').value;
 
             // Handle Image Upload
             const imageInput = document.getElementById('itemImage');
@@ -167,28 +267,70 @@ function setupEventListeners() {
                 date,
                 description,
                 contactInfo,
+                email,
                 icon: icons[category] || 'fa-box',
                 timestamp: Date.now()
             };
 
+            // Handle Image Upload globally using ImgBB (Free, NO CORS ISSUES)
+            if (imageInput.files.length > 0) {
+                const file = imageInput.files[0];
+
+                // Using a public API key for ImgBB 
+                const imgbbKey = '49419b48c3b06292b1ced57d0f946237';
+
+                try {
+                    // Convert file to pure Base64 (No Data URL Prefix) for ImgBB
+                    const base64Image = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.readAsDataURL(file);
+                        reader.onload = () => {
+                            const result = reader.result;
+                            const base64 = result.includes(',') ? result.split(',')[1] : result;
+                            resolve(base64);
+                        };
+                        reader.onerror = error => reject(error);
+                    });
+
+                    // Use URLSearchParams for form-urlencoded payload which ImgBB prefers for base64
+                    const urlEncodedData = new URLSearchParams();
+                    urlEncodedData.append('image', base64Image);
+
+                    const uploadRes = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, {
+                        method: 'POST',
+                        body: urlEncodedData,
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    });
+
+                    const data = await uploadRes.json();
+
+                    if (uploadRes.ok && data.success) {
+                        newItem.image = data.data.url; // Gets the free image link 
+                    } else {
+                        console.error("ImgBB upload error data:", data);
+                        newItem.image = null;
+                        alert("Image upload failed: " + (data.error?.message || "Unknown error"));
+                    }
+                } catch (imgError) {
+                    console.error("Image upload exception:", imgError);
+                    newItem.image = null;
+                }
+            } else {
+                newItem.image = null;
+            }
+
             // IF FIREBASE IS CONFIGURED
             if (isFirebaseConfigured) {
-                // Upload Photo if exists
-                if (imageInput.files.length > 0) {
-                    const file = imageInput.files[0];
-                    const storageRef = ref(storage, 'items/' + Date.now() + '_' + file.name);
-                    const snapshot = await uploadBytes(storageRef, file);
-                    imageUrl = await getDownloadURL(snapshot.ref);
-                }
-
-                newItem.image = imageUrl;
-
-                // Save to Firestore
-                await addDoc(collection(db, "items"), newItem);
+                // Save Everything exactly as before to Firestore Database
+                const docRef = await addDoc(collection(db, "items"), newItem);
+                addOwnedItemId(docRef.id); // Save ownership permission
             }
             // ELSE USE MOCK DATA (Local push)
             else {
                 newItem.id = Date.now().toString();
+                addOwnedItemId(newItem.id); // Save ownership
 
                 // create local preview URL if image exists so it looks real
                 if (imageInput.files.length > 0) {
@@ -221,7 +363,7 @@ function setupEventListeners() {
 
         } catch (error) {
             console.error("Error submitting form: ", error);
-            alert("Oops! Entheyilum kuzhappam patti:\n\n" + error.message + "\n\n(Check your Firebase Storage/Firestore security rules!)");
+            alert("Oops! Something went wrong:\n\n" + error.message + "\n\n(Check your Firebase Storage/Firestore security rules!)");
         } finally {
             submitBtnEl.innerHTML = originalBtnText;
             submitBtnEl.disabled = false;
@@ -238,8 +380,21 @@ function listenForItems() {
     // onSnapshot listens for real-time updates from Firestore
     onSnapshot(q, (querySnapshot) => {
         const items = [];
-        querySnapshot.forEach((doc) => {
-            items.push({ id: doc.id, ...doc.data() });
+        const now = Date.now();
+        querySnapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const item = { id: docSnap.id, ...data };
+
+            // Automatically delete items older than 30 days
+            const ageDays = (now - item.timestamp) / (1000 * 60 * 60 * 24);
+            if (ageDays > 30) {
+                // Auto-delete from database background task
+                deleteDoc(doc(db, "items", docSnap.id)).catch(err => {
+                    console.error("Failed to auto-delete old item:", err);
+                });
+            } else {
+                items.push(item);
+            }
         });
 
         // Update local state and re-render
@@ -328,20 +483,33 @@ function renderItems(items) {
             ? `<img src="${item.image}" alt="${item.name}">`
             : `<i class="fa-solid ${item.icon}" style="font-size: 4rem; color: var(--text-muted)"></i>`;
 
-        const typeDisplay = item.type === 'lost' ? 'POYI 😭' : 'KITTI 😎';
+        const typeDisplay = item.type === 'lost' ? 'LOST 😭' : 'FOUND 😎';
 
         // Escape HTML to prevent basic XSS
         const safeName = escapeHtml(item.name || "Unknown Item");
         const safeDesc = escapeHtml(item.description || "");
         const safeLoc = escapeHtml(item.location || "Unknown Location");
         const safeCategory = escapeHtml(item.category || "Other");
-        const safeContact = escapeHtml(item.contactInfo || "No contact info");
+        const safeContact = escapeHtml(item.contactInfo || "No phone number");
+        const safeEmail = escapeHtml(item.email || "No email provided");
+
+        // Ownership detection
+        const isOwner = getOwnedItemIds().includes(item.id);
+        const deleteButtonHtml = isOwner
+            ? `<button onclick="deleteItem('${item.id}')" title="Delete Item" style="position: absolute; right: 0.8rem; top: 0.8rem; background: rgba(255,0,0,0.8); border: none; border-radius: 50%; width: 35px; height: 35px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; font-size: 0.9rem; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: transform 0.2s;"><i class="fa-solid fa-trash"></i></button>`
+            : '';
 
         card.innerHTML = `
             <div class="item-image">
                 <div class="item-status status-${item.type}">
                     ${typeDisplay}
                 </div>
+                <!-- Share Button -->
+                <button onclick="shareToWhatsApp('${item.id}')" title="Share to WhatsApp" style="position: absolute; right: ${isOwner ? '3.5rem' : '0.8rem'}; top: 0.8rem; background: #25D366; border: none; border-radius: 50%; width: 35px; height: 35px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: transform 0.2s;">
+                    <i class="fa-brands fa-whatsapp"></i>
+                </button>
+                <!-- Delete Button -->
+                ${deleteButtonHtml}
                 ${imageHtml}
             </div>
             <div class="item-content">
@@ -354,6 +522,7 @@ function renderItems(items) {
                 </div>
                 <div class="item-meta" style="margin-top:0.5rem; color:var(--accent-blue)">
                     <div><i class="fa-solid fa-phone"></i> ${safeContact}</div>
+                    <div style="margin-top: 0.3rem;"><i class="fa-solid fa-envelope"></i> <a href="mailto:${safeEmail}" style="color: inherit; text-decoration: none;">${safeEmail}</a></div>
                 </div>
             </div>
         `;
